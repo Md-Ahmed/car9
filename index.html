@@ -34,7 +34,7 @@ body {
 	max-width: 600px;
 }
 
-.hero input, #car-results a {
+.hero input, .results-wrapper li, .hero button {
 	display: block;
 	margin-inline: auto;
 	width: 100%;
@@ -46,18 +46,35 @@ body {
 	outline: transparent;
 }
 
+.hero button {
+	background: #000;
+	color: #fff;
+	border: none;
+	cursor: pointer;
+}
+
+.search-box {
+	display: flex;
+}
+
+.search-box .delete-button {
+	width: fit-content;
+	padding-inline: 1rem;
+}
+
 .results-wrapper {
 	position: relative;
 }
 
-#car-results {
+.results-wrapper ul {
 	display: none;
 	position: absolute;
 	width: 100%;
 	list-style-type: none;
+	z-index: 100;
 }
 
-#car-results a {
+.results-wrapper li {
 	color: #000;
 	background: #fff;
 	text-decoration: none;
@@ -65,12 +82,13 @@ body {
 	border: 1px solid #000;
 }
 
-#car-results a:hover {
+.results-wrapper a:hover {
 	background: #ddd;
 }
 
 .wrapper {
 	margin: 1rem;
+	overflow-x: scroll;
 }
 
 h2 {
@@ -82,24 +100,29 @@ h2 {
 }
 
 .specs {
-	margin-inline: auto;
-	max-width: 140ch;
 }
 
 table {
+	margin-inline: auto;
 	width: 100%;
+	max-width: 140ch;
 	border-collapse: collapse;
 }
 
 tbody {
+	--cols: 2;
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(var(--cols), 1fr);
 }
 
 tr {
 	display: grid;
 	grid-template-columns: subgrid;
-	grid-column: span 2;
+	grid-column: span var(--cols);
+}
+
+tr:first-of-type, td:first-of-type {
+	font-weight: bold;
 }
 
 tr:nth-child(2n) {
@@ -112,6 +135,7 @@ tr:hover {
 
 td {
 	padding: .5rem;
+	align-self: center;
 }
 
 footer {
@@ -142,20 +166,14 @@ footer>*:hover, footer>*:focus {
 <body>
 	<div class="hero">
 		<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 252"><path id="CAR9" fill="#ffffff" d="m151.2 35.8l-7.9 43.2h-36.8l7-38.4q1.3-7.2-0.7-9.2-1.6-2.4-8.8-2.4h-20.4q-7.2 0-10 2.4-2.8 2-4.1 9.2l-31.1 170.8q-1.3 7.2 0.7 9.6 2 2 9.2 2h20.4q7.2 0 9.6-2 2.8-2.4 4.1-9.6l6.9-38h36.8l-7.7 42.4q-6.5 35.6-44.1 35.6h-42.4q-37.2 0-30.7-35.6l32.8-180q6.4-35.2 43.6-35.2h42.4q37.6 0 31.2 35.2zm124.8 215.2h-36.4l0.6-58h-52.8l-19.8 58h-36l90-250.4h52.4zm-34.1-219.2l-44.9 132h43.6zm133.8 118h-19.6l-18.5 101.2h-36l45.6-250.4h82q37.2 0 30.8 35.2l-14.3 78.4q-5.5 30.4-33.1 34.8l21 102h-38.8zm37.5-120h-35.2l-16.6 91.2h35.2q7.2 0 9.9-2 2.9-2.4 4.2-9.6l12.4-68q1.3-7.2-0.8-9.2-1.9-2.4-9.1-2.4z"/><path id="CAR9" fill="#feb90f" d="m537.2 0.6h42.4q37.6 0 31.2 35.2l-32.8 180q-6.4 35.2-44 35.2h-41.2q-37.6 0-31.2-35.2l7.8-42.8h36l-6.8 37.2q-1.3 7.2 0.3 9.6 2 2 9.6 2h20.4q7.2 0 9.6-2 2.8-2.4 4.1-9.6l11.2-61.6h-43.6q-37.2 0-30.7-35.6l14.1-77.2q6.4-35.2 43.6-35.2zm-11 119.6h32.8l14.3-78.8q1.4-7.2-0.7-9.2-1.5-2.4-8.7-2.4h-21.2q-7.2 0-10.1 2.4-2.7 2-4.1 9.2l-12.2 67.2q-1.2 6.8 0.7 9.2 2 2.4 9.2 2.4z"/></svg>
-		<input type="search" id="car-search" placeholder="Search">
-		<div class="results-wrapper">
-			<ul id="car-results">
-			</ul>
-		</div>
+		<div class="car-search-wrapper"></div>
+		<button onclick="addCarSearch()">+Add Car</button>
 	</div>
 	<div class="wrapper">
-		<div class="specs">
-			<h2 id="name"></h2>
 			<table>
-				<tbody id="tbody">
+				<tbody>
 				</tbody>
 			</table>
-		</div>
 	</div>
 
 	<footer>
@@ -163,51 +181,120 @@ footer>*:hover, footer>*:focus {
 		<a href="#">↑ BACK TO TOP</a>
 	</footer>
 
-	<script>
-		let tbody = document.getElementById("tbody");
-		let name = document.getElementById("name");
-		let carSearch = document.getElementById("car-search");
-		let carResults = document.getElementById("car-results");
+<script>
+let tbody = document.querySelector("tbody");
+let carSearchWrapper = document.querySelector(".car-search-wrapper");
+let rows = [];
+let inputCount = 1;
 
-		let rows = [];
+function addCarSearch() {
+	let searchContainer = document.createElement("div");
+	searchContainer.classList.add("car-search-container");
+	searchContainer.dataset.col = inputCount;
 
-		carSearch.oninput = e => {
-			carResults.innerHTML = "";
-			let regex = new RegExp(e.target.value, "i");
-			for(i = 1; i < rows.length; ++i){
-				if (rows[i][0].match(regex)) {
-					carResults.innerHTML += `<li><a onmousedown="loadCar(${i})">${rows[i][0]}</a></li>`;
-				}
+	let searchBox = document.createElement("div");
+	searchBox.classList.add("search-box");
+
+	let input = document.createElement("input");
+	input.type = "search";
+	input.placeholder = "Search";
+
+	let btn = document.createElement("button");
+	btn.classList.add("delete-button");
+	btn.innerText = "X";
+	btn.onclick = e => deleteCarSearch(e);
+
+	searchBox.appendChild(input);
+	searchBox.appendChild(btn);
+
+	let resultsWrapper = document.createElement("div");
+	resultsWrapper.classList.add("results-wrapper");
+	let result = document.createElement("ul");
+	resultsWrapper.appendChild(result);
+
+	populateResults(input, result);
+	input.oninput = e => {
+		populateResults(e.target, result)
+	}
+	input.onfocus = e => {
+		result.style.display = "block";
+	}
+	input.onblur = e => {
+		result.style.display = "none";
+	}
+
+	searchContainer.appendChild(searchBox);
+	searchContainer.appendChild(resultsWrapper);
+
+	carSearchWrapper.appendChild(searchContainer);
+
+	let td = document.createElement('td');
+	td.innerText = "-";
+	document.querySelectorAll('tr').forEach(elem => {
+		elem.appendChild(td.cloneNode(true));
+	});
+
+	++inputCount;
+	tbody.style.setProperty('--cols', inputCount);
+}
+
+function deleteCarSearch(e) {
+	let search = e.target.parentElement.parentElement;
+	let col = Number(search.dataset.col);
+	document.querySelectorAll(`td:nth-of-type(${col + 1})`).forEach(elem => {
+		elem.remove();
+	});
+	search.remove();
+	document.querySelectorAll('.car-search-container').forEach(elem => {
+		if(elem.dataset.col >= col) {
+			--elem.dataset.col;
+		}
+	});
+	--inputCount;
+	tbody.style.setProperty('--cols', inputCount);
+}
+
+function populateResults(elem, result) {
+	result.innerHTML = "";
+	let regex = new RegExp(elem.value, "i");
+	let li = document.createElement("li");
+	for(let i = 1; i < rows.length; ++i){
+		if (rows[i][0].match(regex)) {
+			let _li = li.cloneNode();
+			_li.innerHTML = rows[i][0];
+			_li.onmousedown = e => {
+				let col = Number(elem.parentElement.parentElement.dataset.col);
+				loadCar(i, col, elem);
 			}
+			result.appendChild(_li);
 		}
+	}
+}
 
-		carSearch.onfocus = e => {
-			carResults.style.display = "block";
+fetch("data.csv").then(r => r.text()).then(t => {
+	t.split('\n').filter(t => t).forEach(r => rows.push(r.split(';')));
+
+	// TODO Bake in these values into the html
+	for (let i = 0; i < rows[0].length; ++i) {
+		let html = '';
+		for(let i = 0; i < rows[0].length; ++i) {
+			html += `<tr>
+				<td>${rows[0][i]}</td>
+			</tr>`;
 		}
-		carSearch.onblur = e => {
-			carResults.style.display = "none";
-		}
+		tbody.innerHTML = html;
+	}
+	// Add an input without a delete button
+	addCarSearch();
+	document.querySelector('.delete-button').remove();
+});
 
-		fetch("data.csv").then(r => r.text()).then(t => {
-			t.split('\n').filter(t => t).forEach(r => rows.push(r.split(';')));
-
-			for(i = 1; i < rows.length; ++i) {
-				carResults.innerHTML += `<li><a onmousedown="loadCar(${i})">${rows[i][0]}</a></li>`;
-			}
-		});
-
-		function loadCar(selected) {
-			carSearch.value = "";
-			name.innerHTML = rows[selected][0];
-			let html = '';
-			for(i = 1; i < rows[0].length; ++i) {
-				html += `<tr>
-						<td>${rows[0][i]}</td>
-						<td>${rows[selected][i]}</td>
-					</tr>`;
-			}
-			tbody.innerHTML = html;
-		}
-	</script>
+function loadCar(selected, col, parent) {
+	parent.value = rows[selected][0];
+	document.querySelectorAll(`td:nth-of-type(${col + 1})`).forEach((elem, i) => {
+		elem.innerText = rows[selected][i];
+	});
+}
+</script>
 </body>
 </html>
