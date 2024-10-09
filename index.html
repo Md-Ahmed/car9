@@ -4,6 +4,7 @@
 	<title>Car 9</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#008aff">
 <style>
 * {
 	margin: 0;
@@ -16,10 +17,32 @@ html {
 }
 
 body {
+	--theme-bg: #fff;
+	--theme-text: #000;
+	--theme-bg-highlight: #eee;
+	--theme-input: #fff;
+	--theme-hover: #ddd;
+	--dark-toggle-bg-color: #ccc;
+	--dark-toggle-btn-color: #fff;
+	--dark-toggle-contents: '☀️';
+
+	background: var(--theme-bg);
+	color: var(--theme-text);
 	font-family: sans-serif;
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
+}
+
+body.dark-theme {
+	--theme-bg: #0f1214;
+	--theme-text: #fff;
+	--theme-bg-highlight: #11171d;
+	--theme-input: #14171b;
+	--theme-hover: #1d212f;
+	--dark-toggle-bg-color: #448;
+	--dark-toggle-btn-color: #44f;
+	--dark-toggle-contents: '🌙';
 }
 
 .hero {
@@ -40,6 +63,9 @@ body {
 	width: 100%;
 	max-width: 60ch;
 	padding: .5rem;
+	border: 1px solid #000;
+	background: var(--theme-input);
+	color: var(--theme-text);
 	font-size: 1.2rem;
 	font-weight: bold;
 	text-align: center;
@@ -75,15 +101,15 @@ body {
 }
 
 .results-wrapper li {
-	color: #000;
-	background: #fff;
+	color: var(--theme-text);
+	background: var(--theme-bg);
 	text-decoration: none;
 	cursor: pointer;
 	border: 1px solid #000;
 }
 
-.results-wrapper a:hover {
-	background: #ddd;
+.results-wrapper li:hover {
+	background: var(--theme-hover);
 }
 
 .wrapper {
@@ -126,11 +152,11 @@ tr:first-of-type, td:first-of-type {
 }
 
 tr:nth-child(2n) {
-	background: #eee;
+	background: var(--theme-bg-highlight);
 }
 
 tr:hover {
-	background: #ddd;
+	background: var(--theme-hover);
 }
 
 td {
@@ -161,6 +187,37 @@ footer>*, footer>* {
 footer>*:hover, footer>*:focus {
 	color: #fff;
 }
+
+footer input[type="checkbox"] {
+	--switch-size: 2rem;
+	all: unset;
+	margin-inline: auto;
+	margin-block: 1rem;
+	position: relative;
+	background: var(--theme-bg-highlight);
+	width: 4rem;
+	height: calc(var(--switch-size) * .5);
+	border-radius: 24px;
+	align-self: center;
+	transition: background 200ms ease-in-out;
+}
+footer input[type="checkbox"]::after {
+	content: var(--dark-toggle-contents);
+	display: grid;
+	place-items: center;
+	position: absolute;
+	left: 0;
+	top: -50%;
+	background: var(--dark-toggle-btn-color);
+	width: var(--switch-size);
+	height: var(--switch-size);
+	border-radius: var(--switch-size);
+	box-shadow: 0 0 10px #888;
+	transition: left 200ms ease-in-out;
+}
+footer input[type="checkbox"]:checked::after {
+	left: calc(100% - var(--switch-size));
+}
 </style>
 </head>
 <body>
@@ -179,6 +236,7 @@ footer>*:hover, footer>*:focus {
 	<footer>
 		<span>© CAR9 2024</span>
 		<a href="#">↑ BACK TO TOP</a>
+		<input type="checkbox" onchange="toggleDarkMode()" aria-label="Toggle Dark Mode">
 	</footer>
 
 <script>
@@ -294,6 +352,10 @@ function loadCar(selected, col, parent) {
 	document.querySelectorAll(`td:nth-of-type(${col + 1})`).forEach((elem, i) => {
 		elem.innerText = rows[selected][i];
 	});
+}
+
+function toggleDarkMode() {
+	document.body.classList.toggle('dark-theme');
 }
 </script>
 </body>
