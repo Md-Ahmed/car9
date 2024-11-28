@@ -150,6 +150,10 @@ tr {
 	grid-column: span var(--cols);
 }
 
+tr:not(:has(.known)) {
+	display: none;
+}
+
 tr:first-of-type, td:first-of-type {
 	font-weight: bold;
 }
@@ -339,7 +343,7 @@ function populateResults(elem, result) {
 }
 
 fetch("data.csv").then(r => r.text()).then(t => {
-	t.split('\n').filter(t => t).forEach(r => rows.push(r.split(';')));
+	t.split('\n').filter(t => t).forEach(r => rows.push(r.split('\t')));
 
 	// TODO Bake in these values into the html
 	for (let i = 0; i < rows[0].length; ++i) {
@@ -359,7 +363,16 @@ fetch("data.csv").then(r => r.text()).then(t => {
 function loadCar(selected, col, parent) {
 	parent.value = rows[selected][0];
 	document.querySelectorAll(`td:nth-of-type(${col + 1})`).forEach((elem, i) => {
-		elem.innerText = rows[selected][i];
+		let value = rows[selected][i];
+		let known = true;
+		if (value === 'True') value = '✅';
+		if (value === 'False') value = '❌';
+		if (value === 'None') {
+			value = '❔';
+			known = false;
+		}
+		if (known) elem.classList.add('known');
+		elem.innerText = value;
 	});
 }
 
